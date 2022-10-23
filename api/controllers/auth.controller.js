@@ -2,8 +2,8 @@ import jwt from "jsonwebtoken";
 import { comparePassword, encryptPassword } from "../utils/encrypt.js";
 import { createResponse } from "../utils/response.js";
 import Client from "../models/client.js";
-import { streamUpload } from "../utils/imageUploader.js";
-import { downloadCloud, downloadNew } from "../utils/downloadImage.js";
+import { deleteImage, getImageId, streamUpload } from "../utils/imageUploader.js";
+import { needPalmarPrintLogin } from "../services/prediction.service.js";
 
 export const login = async (req, res) => {
   try {
@@ -44,12 +44,12 @@ export const palmPrintLogin = async (req, res) => {
   const { _id: _id } = req.query;
   try {
     let client = await Client.findById(_id);
-    const bufferImageOld = await downloadCloud(client.palmPrint);
-    const bufferImageNew = await downloadNew(req.file);
-    console.log(bufferImageOld);
-    console.log(bufferImageNew);
+    const result = await streamUpload(req);
+    const imageId = getImageId(result);
     // TODO: call WS to obtain if palmar print's client is the same in both images
     // send 2 bmps
+
+    deleteImage(imageId);
     const authentication = true;
     res.json(createResponse(1, "Login exitoso", authentication));
   } catch (e) {
@@ -75,8 +75,7 @@ export const uploadPalmPrint = async (req, res) => {
 export const validateDocument = async (req, res) => {
   const documentType = req.body.documentType;
   const documentNumber = req.body.documentNumber;
-  console.log(documentType);
-  console.log(documentNumber);
+  let loginType = "CLASSIC";
   const client = await Client.findOne({
     documentType: documentType,
     documentNumber: documentNumber,
@@ -84,17 +83,21 @@ export const validateDocument = async (req, res) => {
   if (client === null) {
     res.json(createResponse(0, "El cliente no existe", null));
   } else {
-    // TODO: call WS to obtain if client needs palmarprint recognition
-    // send client.code
-    // const loginType = "PALMAR_PRINT";
-    const loginType = "CLASSIC";
-    res.json(
-      createResponse(1, "Cliente encontrado", {
-        _id: client._id,
-        name: client.name,
-        loginType: loginType,
-      })
-    );
+    needPalmarPrintLogin(client.code).then((data) => {
+      if(data && data.response) {
+        if(data.response === true) loginType = "PALMAR_PRINT";
+      }
+      res.json(
+        createResponse(1, "Cliente encontrado", {
+          _id: client._id,
+          name: client.name,
+          loginType: loginType,
+        })
+      );
+    }, (error) => {
+      console.log(error);
+      res.json(createResponse(-1, "Error en el servidor", null));
+    });
   }
 };
 

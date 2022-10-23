@@ -32,3 +32,23 @@ export const streamUpload = async (req) => {
   return upload(req);
 };
 
+export const deleteImage = async (imageId) => {
+  await cloudinary.v2.uploader
+    .destroy(imageId)
+    .then((result) => console.log(result));
+};
+
+export const getImageId = (url) => {
+  let startPosition = 0;
+  let endPosition = 0;
+  for (let i = url.length - 1; i >= 0; i--) {
+    if (url[i] === ".") {
+      startPosition = i;
+    }
+    if (url[i] === "/") {
+      endPosition = i + 1;
+      break;
+    }
+  }
+  return url.slice(endPosition, startPosition);
+};
