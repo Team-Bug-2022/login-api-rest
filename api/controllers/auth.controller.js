@@ -2,8 +2,13 @@ import jwt from "jsonwebtoken";
 import { comparePassword, encryptPassword } from "../utils/encrypt.js";
 import { createResponse } from "../utils/response.js";
 import Client from "../models/client.js";
-import { deleteImage, getImageId, streamUpload } from "../utils/imageUploader.js";
+import {
+  deleteImage,
+  getImageId,
+  streamUpload,
+} from "../utils/imageUploader.js";
 import { needPalmarPrintLogin } from "../services/prediction.service.js";
+import { comparePalmarPrint } from "../services/compare.service.js";
 
 export const login = async (req, res) => {
   try {
@@ -46,27 +51,43 @@ export const palmPrintLogin = async (req, res) => {
     let client = await Client.findById(_id);
     const result = await streamUpload(req);
     const imageId = getImageId(result);
-    // TODO: call WS to obtain if palmar print's client is the same in both images
-    // send 2 bmps
 
-    deleteImage(imageId);
-    const authentication = true;
-    
-    jwt.sign(
-      { exp: Math.floor(Date.now() / 1000) + 36000, _id: client._id },
-      process.env.SECRET_KEY,
-      (error, token) => {
-        if (!error) {
-          const clientDto = {
-            _id: client._id,
-            code: client.code,
-            token: token,
-          };
-          res.json(createResponse(1, "Login exitoso", clientDto));
+    comparePalmarPrint({
+      urlImageOld: client.palmPrint,
+      urlImageNew: result,
+    }).then(
+      (data) => {
+        console.log(result);
+        if (data && data.match) {
+          if (data.match === true) {
+            deleteImage(imageId);
+            jwt.sign(
+              { exp: Math.floor(Date.now() / 1000) + 36000, _id: client._id },
+              process.env.SECRET_KEY,
+              (error, token) => {
+                if (!error) {
+                  const clientDto = {
+                    _id: client._id,
+                    code: client.code,
+                    token: token,
+                  };
+                  res.json(createResponse(1, "Login exitoso", clientDto));
+                } else {
+                  console.log(error);
+                  res.json(createResponse(-1, "Error en token", null));
+                }
+              }
+            );
+          }
         } else {
-          console.log(error);
-          res.json(createResponse(-1, "Error en token", null));
+          res.json(createResponse(-1, "Error de autenticación", null));
+          deleteImage(imageId);
         }
+      },
+      (error) => {
+        console.log(error);
+        deleteImage(imageId);
+        res.json(createResponse(-1, "Error en el servidor", null));
       }
     );
   } catch (e) {
@@ -100,21 +121,24 @@ export const validateDocument = async (req, res) => {
   if (client === null) {
     res.json(createResponse(0, "El cliente no existe", null));
   } else {
-    needPalmarPrintLogin(client.code).then((data) => {
-      if(data && data.response) {
-        if(data.response === true) loginType = "PALMAR_PRINT";
+    needPalmarPrintLogin(client.code).then(
+      (data) => {
+        if (data && data.response) {
+          if (data.response === true) loginType = "PALMAR_PRINT";
+        }
+        res.json(
+          createResponse(1, "Cliente encontrado", {
+            _id: client._id,
+            name: client.name,
+            loginType: loginType,
+          })
+        );
+      },
+      (error) => {
+        console.log(error);
+        res.json(createResponse(-1, "Error en el servidor", null));
       }
-      res.json(
-        createResponse(1, "Cliente encontrado", {
-          _id: client._id,
-          name: client.name,
-          loginType: loginType,
-        })
-      );
-    }, (error) => {
-      console.log(error);
-      res.json(createResponse(-1, "Error en el servidor", null));
-    });
+    );
   }
 };
 

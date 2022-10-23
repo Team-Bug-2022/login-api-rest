@@ -1,8 +1,8 @@
 import { httpClientCompare } from "../utils/httpClient.js";
 
-export const httpClientCompare = async (urlImageDto) => {
-  const data = await httpClientPrediction
-    .post(`/compare`, urlImageDto)
+export const comparePalmarPrint = async (urlImageDto) => {
+  const data = await httpClientCompare
+    .post(`/checkImgages`, urlImageDto)
     .then((v) => v.data);
   return data;
 };
