@@ -1,0 +1,28 @@
+{
+    "name": "login-api-rest",
+    "type": "module",
+    "version": "1.0.0",
+    "main": "index.js",
+    "scripts": {
+        "start": "nodemon server.js"
+    },
+    "author": "LaMalditaProgramadora",
+    "license": "ISC",
+    "description": "",
+    "dependencies": {
+        "@babel/plugin-transform-modules-commonjs": "^7.17.9",
+        "axios": "^0.26.1",
+        "bcrypt": "^5.0.1",
+        "cloudinary": "^1.28.1",
+        "cors": "^2.8.5",
+        "dotenv": "^16.0.0",
+        "express": "^4.17.2",
+        "http": "^0.0.1-security",
+        "jsonwebtoken": "^8.5.1",
+        "mongoose": "^6.2.0",
+        "multer": "^1.4.4",
+        "node-fetch": "^3.2.10",
+        "nodemon": "^2.0.15",
+        "streamifier": "^0.1.1"
+    }
+}
