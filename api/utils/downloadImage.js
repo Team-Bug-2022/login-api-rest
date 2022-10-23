@@ -1,5 +1,4 @@
-//import { writeFile } from "fs";
-import fetch from "node-fetch";
+//import fetch from "node-fetch";
 
 export const downloadCloud = async (url) => {
   const response = await fetch(url);
@@ -10,6 +9,6 @@ export const downloadCloud = async (url) => {
 
 export const downloadNew = async (file) => {
   const buffer = file.buffer;
-  //writeFile(`./image-local.jpg`, buffer, () =>
+  //writeFile(`./image-local.jpg`, buffer, () => console.log("finished downloading!"));
   return buffer;
 };
