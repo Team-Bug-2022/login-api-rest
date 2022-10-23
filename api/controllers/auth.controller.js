@@ -51,7 +51,24 @@ export const palmPrintLogin = async (req, res) => {
 
     deleteImage(imageId);
     const authentication = true;
-    res.json(createResponse(1, "Login exitoso", authentication));
+    
+    jwt.sign(
+      { exp: Math.floor(Date.now() / 1000) + 36000, _id: client._id },
+      process.env.SECRET_KEY,
+      (error, token) => {
+        if (!error) {
+          const clientDto = {
+            _id: client._id,
+            code: client.code,
+            token: token,
+          };
+          res.json(createResponse(1, "Login exitoso", clientDto));
+        } else {
+          console.log(error);
+          res.json(createResponse(-1, "Error en token", null));
+        }
+      }
+    );
   } catch (e) {
     console.log(e);
     res.json(createResponse(-1, "Error en el servidor", null));
