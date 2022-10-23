@@ -59,7 +59,7 @@ export const palmPrintLogin = async (req, res) => {
       (data) => {
         console.log(result);
         if (data && data.match) {
-          if (data.match  /*=== true*/) {
+          if (true /*data.match === true*/) {
             deleteImage(imageId);
             jwt.sign(
               { exp: Math.floor(Date.now() / 1000) + 36000, _id: client._id },
