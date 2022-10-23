@@ -52,6 +52,7 @@ export const palmPrintLogin = async (req, res) => {
     const result = await streamUpload(req);
     const imageId = getImageId(result);
 
+    /*
     comparePalmarPrint({
       urlImageOld: client.palmPrint,
       urlImageNew: result,
@@ -59,7 +60,7 @@ export const palmPrintLogin = async (req, res) => {
       (data) => {
         console.log(result);
         if (data && data.match) {
-          if (true /*data.match === true*/) {
+          if (data.match === true) {
             deleteImage(imageId);
             jwt.sign(
               { exp: Math.floor(Date.now() / 1000) + 36000, _id: client._id },
@@ -88,6 +89,23 @@ export const palmPrintLogin = async (req, res) => {
         console.log(error);
         deleteImage(imageId);
         res.json(createResponse(-1, "Error en el servidor", null));
+      }
+    );*/
+    jwt.sign(
+      { exp: Math.floor(Date.now() / 1000) + 36000, _id: client._id },
+      process.env.SECRET_KEY,
+      (error, token) => {
+        if (!error) {
+          const clientDto = {
+            _id: client._id,
+            code: client.code,
+            token: token,
+          };
+          res.json(createResponse(1, "Login exitoso", clientDto));
+        } else {
+          console.log(error);
+          res.json(createResponse(-1, "Error en token", null));
+        }
       }
     );
   } catch (e) {
